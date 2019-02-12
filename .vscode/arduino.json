@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "programmer": "ArduinoISP",
+    "port": "/dev/cu.usbmodem14201",
+    "sketch": "OlleKod/OlleKod.ino"
+}
