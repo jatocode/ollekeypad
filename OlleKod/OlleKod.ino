@@ -7,7 +7,6 @@
 #define BLUEPIN 10
 #define CONTACTPIN 9
 
-
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 char keys[ROWS][COLS] = {
@@ -45,13 +44,15 @@ String correctCode = "1234";
 
 int state = 0;
 
-void light1s(int pin) {
+void light1s(int pin)
+{
 	digitalWrite(pin, HIGH);
 	delay(1000);
 	digitalWrite(pin, LOW);
 }
 
-void alarm(int seconds) {
+void alarm(double seconds)
+{
 	digitalWrite(LARMPIN, HIGH);
 	delay(seconds * 1000);
 	digitalWrite(LARMPIN, LOW);
@@ -75,7 +76,7 @@ void setup()
 	light1s(GREENPIN);
 	light1s(REDPIN);
 	light1s(BLUEPIN);
-	alarm(0.3);
+	alarm(0.1);
 
 	Serial.println("Olles keyboard");
 	Serial.println("Tryck din hemliga kod!");
@@ -96,13 +97,27 @@ void loop()
 	{
 		digitalWrite(LED_BUILTIN, LOW);
 	}
+	if (state == 0)
+	{
+		digitalWrite(GREENPIN, LOW);
+		digitalWrite(REDPIN, HIGH);
+	}
+	else if (state == 2)
+	{
+		digitalWrite(GREENPIN, HIGH);
+		digitalWrite(REDPIN, LOW);
+	}
 
 	int contact = digitalRead(CONTACTPIN);
-	if(contact == HIGH) {
-		// Öppen krets så går larmet
-		digitalWrite(REDPIN, HIGH);		
-	} else {
-		digitalWrite(REDPIN, LOW);		
+
+	if (state == 0 && contact == HIGH)
+	{
+		digitalWrite(BLUEPIN, HIGH);
+		digitalWrite(LARMPIN, HIGH);
+
+		delay(50);
+		digitalWrite(BLUEPIN, LOW);
+		digitalWrite(LARMPIN, LOW);
 	}
 
 	if (kpd.getKeys())
@@ -143,20 +158,19 @@ void loop()
 			digitalWrite(LED_BUILTIN, HIGH);
 			delay(3000);
 			digitalWrite(LED_BUILTIN, LOW);
-		}
-		else
-		{
-			for (int i = 0; i < 50; i++)
-			{
-				Serial.println("* * * * * ALARM ALARM ALARM * * * * * *");
-				digitalWrite(LED_BUILTIN, HIGH);
-				digitalWrite(LARMPIN, HIGH);
 
-				delay(50);
-				digitalWrite(LED_BUILTIN, LOW);
-				digitalWrite(LARMPIN, LOW);
+			// Toggle open or not
+			if (state == 0)
+			{
+				state = 2;
 			}
+			else if (state == 2)
+			{
+				state = 0;
+			}
+			Serial.println(state);
 		}
+
 		code = "";
 	}
 
