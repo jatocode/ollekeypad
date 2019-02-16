@@ -1,6 +1,12 @@
 
 #include <Keypad.h>
+
+#define GREENPIN 13
 #define LARMPIN 12
+#define REDPIN 11
+#define BLUEPIN 10
+#define CONTACTPIN 9
+
 
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
@@ -39,6 +45,18 @@ String correctCode = "1234";
 
 int state = 0;
 
+void light1s(int pin) {
+	digitalWrite(pin, HIGH);
+	delay(1000);
+	digitalWrite(pin, LOW);
+}
+
+void alarm(int seconds) {
+	digitalWrite(LARMPIN, HIGH);
+	delay(seconds * 1000);
+	digitalWrite(LARMPIN, LOW);
+}
+
 void setup()
 {
 	Serial.begin(115200);
@@ -46,9 +64,18 @@ void setup()
 	code = "";
 	startTime = millis();
 	pinMode(LED_BUILTIN, OUTPUT);
+	pinMode(GREENPIN, OUTPUT);
+	pinMode(REDPIN, OUTPUT);
+	pinMode(BLUEPIN, OUTPUT);
 	pinMode(LARMPIN, OUTPUT);
+	pinMode(CONTACTPIN, INPUT);
 
 	delay(200);
+
+	light1s(GREENPIN);
+	light1s(REDPIN);
+	light1s(BLUEPIN);
+	alarm(5);
 
 	Serial.println("Olles keyboard");
 	Serial.println("Tryck din hemliga kod!");
@@ -97,7 +124,7 @@ void loop()
 	{
 		if (state == 1)
 		{
-			Serial.println("NY KOD!");
+			Serial.print("DU HAR VALT NY KOD: ");
 			Serial.println(code);
 			correctCode = code;
 			state = 0;
