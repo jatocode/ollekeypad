@@ -68,14 +68,14 @@ void setup()
 	pinMode(REDPIN, OUTPUT);
 	pinMode(BLUEPIN, OUTPUT);
 	pinMode(LARMPIN, OUTPUT);
-	pinMode(CONTACTPIN, INPUT);
+	pinMode(CONTACTPIN, INPUT_PULLUP);
 
 	delay(200);
 
 	light1s(GREENPIN);
 	light1s(REDPIN);
 	light1s(BLUEPIN);
-	alarm(5);
+	alarm(0.3);
 
 	Serial.println("Olles keyboard");
 	Serial.println("Tryck din hemliga kod!");
@@ -95,6 +95,14 @@ void loop()
 	else
 	{
 		digitalWrite(LED_BUILTIN, LOW);
+	}
+
+	int contact = digitalRead(CONTACTPIN);
+	if(contact == HIGH) {
+		// Öppen krets så går larmet
+		digitalWrite(REDPIN, HIGH);		
+	} else {
+		digitalWrite(REDPIN, LOW);		
 	}
 
 	if (kpd.getKeys())
