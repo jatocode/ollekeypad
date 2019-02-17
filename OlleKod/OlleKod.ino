@@ -89,35 +89,32 @@ void loop()
 		code = "";
 		hold = "";
 	}
-	if (state == 1)
+	switch (state)
 	{
-		digitalWrite(LED_BUILTIN, HIGH);
-	}
-	else
-	{
+	case 0: // Larmat
 		digitalWrite(LED_BUILTIN, LOW);
-	}
-	if (state == 0)
-	{
 		digitalWrite(GREENPIN, LOW);
 		digitalWrite(REDPIN, HIGH);
-	}
-	else if (state == 2)
-	{
+		if (digitalRead(CONTACTPIN) == HIGH)
+		{
+			digitalWrite(BLUEPIN, HIGH);
+			digitalWrite(LARMPIN, HIGH);
+
+			delay(50);
+			digitalWrite(BLUEPIN, LOW);
+			digitalWrite(LARMPIN, LOW);
+		}
+		break;
+	case 1: // Byter kod
+		digitalWrite(LED_BUILTIN, HIGH);
+		break;
+	case 2: // Avlarmat
+		digitalWrite(LED_BUILTIN, LOW);
 		digitalWrite(GREENPIN, HIGH);
 		digitalWrite(REDPIN, LOW);
-	}
-
-	int contact = digitalRead(CONTACTPIN);
-
-	if (state == 0 && contact == HIGH)
-	{
-		digitalWrite(BLUEPIN, HIGH);
-		digitalWrite(LARMPIN, HIGH);
-
-		delay(50);
-		digitalWrite(BLUEPIN, LOW);
-		digitalWrite(LARMPIN, LOW);
+		break;
+	default:
+		break;
 	}
 
 	if (kpd.getKeys())
