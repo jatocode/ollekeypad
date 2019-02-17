@@ -10,12 +10,12 @@
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 char keys[ROWS][COLS] = {
-	{'1', '2', '3'},
-	{'4', '5', '6'},
-	{'7', '8', '9'},
-	{'*', '0', '#'}};
+    {'1', '2', '3'},
+    {'4', '5', '6'},
+    {'7', '8', '9'},
+    {'*', '0', '#'}};
 byte rowPins[ROWS] = {5, 2, 3, 4}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {7, 8, 6};	//connect to the column pinouts of the keypad
+byte colPins[COLS] = {7, 8, 6};    //connect to the column pinouts of the keypad
 
 /*
     Olles keypad
@@ -46,135 +46,136 @@ int state = 0;
 
 void light1s(int pin)
 {
-	digitalWrite(pin, HIGH);
-	delay(1000);
-	digitalWrite(pin, LOW);
+    digitalWrite(pin, HIGH);
+    delay(1000);
+    digitalWrite(pin, LOW);
 }
 
 void alarm(double seconds)
 {
-	digitalWrite(LARMPIN, HIGH);
-	delay(seconds * 1000);
-	digitalWrite(LARMPIN, LOW);
+    digitalWrite(LARMPIN, HIGH);
+    delay(seconds * 1000);
+    digitalWrite(LARMPIN, LOW);
 }
 
 void setup()
 {
-	Serial.begin(115200);
-	hold = "";
-	code = "";
-	startTime = millis();
-	pinMode(LED_BUILTIN, OUTPUT);
-	pinMode(GREENPIN, OUTPUT);
-	pinMode(REDPIN, OUTPUT);
-	pinMode(BLUEPIN, OUTPUT);
-	pinMode(LARMPIN, OUTPUT);
-	pinMode(CONTACTPIN, INPUT_PULLUP);
+    Serial.begin(115200);
+    hold = "";
+    code = "";
+    startTime = millis();
+    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(GREENPIN, OUTPUT);
+    pinMode(REDPIN, OUTPUT);
+    pinMode(BLUEPIN, OUTPUT);
+    pinMode(LARMPIN, OUTPUT);
+    pinMode(CONTACTPIN, INPUT_PULLUP);
 
-	delay(200);
+    delay(200);
 
-	light1s(GREENPIN);
-	light1s(REDPIN);
-	light1s(BLUEPIN);
-	alarm(0.1);
+    light1s(GREENPIN);
+    light1s(REDPIN);
+    light1s(BLUEPIN);
+    alarm(0.1);
 
-	Serial.println("Olles keyboard");
-	Serial.println("Tryck din hemliga kod!");
+    Serial.println("Olles keyboard");
+    Serial.println("Tryck din hemliga kod!");
 }
 
 void loop()
 {
-	if ((millis() - startTime) > 1000)
-	{
-		code = "";
-		hold = "";
-	}
-	switch (state)
-	{
-	case 0: // Larmat
-		digitalWrite(LED_BUILTIN, LOW);
-		digitalWrite(GREENPIN, LOW);
-		digitalWrite(REDPIN, HIGH);
-		if (digitalRead(CONTACTPIN) == HIGH)
-		{
-			digitalWrite(BLUEPIN, HIGH);
-			digitalWrite(LARMPIN, HIGH);
+    if ((millis() - startTime) > 1000)
+    {
+        code = "";
+        hold = "";
+    }
+    switch (state)
+    {
+    case 0: // Larmat
+        digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(GREENPIN, LOW);
+        digitalWrite(REDPIN, HIGH);
+        if (digitalRead(CONTACTPIN) == HIGH)
+        {
+            digitalWrite(BLUEPIN, HIGH);
+            digitalWrite(LARMPIN, HIGH);
 
-			delay(50);
-			digitalWrite(BLUEPIN, LOW);
-			digitalWrite(LARMPIN, LOW);
-		}
-		break;
-	case 1: // Byter kod
-		digitalWrite(LED_BUILTIN, HIGH);
-		break;
-	case 2: // Avlarmat
-		digitalWrite(LED_BUILTIN, LOW);
-		digitalWrite(GREENPIN, HIGH);
-		digitalWrite(REDPIN, LOW);
-		break;
-	default:
-		break;
-	}
+            delay(50);
+            digitalWrite(BLUEPIN, LOW);
+            digitalWrite(LARMPIN, LOW);
+        }
+        break;
+    case 1: // Byter kod
+        digitalWrite(LED_BUILTIN, HIGH);
+        break;
+    case 2: // Avlarmat
+        digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(GREENPIN, HIGH);
+        digitalWrite(REDPIN, LOW);
+        break;
+    default:
+        break;
+    }
 
-	if (kpd.getKeys())
-	{
-		for (int i = 0; i < LIST_MAX; i++) // Scan the whole key list.
-		{
-			if (kpd.key[i].stateChanged) // Only find keys that have changed state.
-			{
-				switch (kpd.key[i].kstate)
-				{ // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
-				case PRESSED:
-					code += kpd.key[i].kchar;
-					startTime = millis();
-					break;
-				case HOLD:
-					hold += kpd.key[i].kchar;
-					break;
-				case RELEASED:
-					break;
-				case IDLE:
-					break;
-				}
-			}
-		}
-	}
-	if (code.length() == correctCode.length())
-	{
-		if (state == 1)
-		{
-			Serial.print("DU HAR VALT NY KOD: ");
-			Serial.println(code);
-			correctCode = code;
-			state = 0;
-		}
-		else if (code == correctCode)
-		{
-			Serial.println("VÄLKOMMEN IN TILL OLLE!");
-			digitalWrite(LED_BUILTIN, HIGH);
-			delay(3000);
-			digitalWrite(LED_BUILTIN, LOW);
+    if (kpd.getKeys())
+    {
+        for (int i = 0; i < LIST_MAX; i++) // Scan the whole key list.
+        {
+            if (kpd.key[i].stateChanged) // Only find keys that have changed state.
+            {
+                switch (kpd.key[i].kstate)
+                { // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
+                case PRESSED:
+                    code += kpd.key[i].kchar;
+                    startTime = millis();
+                    break;
+                case HOLD:
+                    hold += kpd.key[i].kchar;
+                    break;
+                case RELEASED:
+                    break;
+                case IDLE:
+                    break;
+                }
+            }
+        }
+    }
+    if (code.length() == correctCode.length())
+    {
+        if (state == 1)
+        {
+            Serial.print("DU HAR VALT NY KOD: ");
+            Serial.println(code);
+            correctCode = code;
+            state = 0;
+        }
+        else if (code == correctCode)
+        {
+            Serial.println("Rätt kod!");
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(3000);
+            digitalWrite(LED_BUILTIN, LOW);
 
-			// Toggle open or not
-			if (state == 0)
-			{
-				state = 2;
-			}
-			else if (state == 2)
-			{
-				state = 0;
-			}
-			Serial.println(state);
-		}
+            // Toggle open or not
+            if (state == 0)
+            {
+                Serial.println('Larmar av');
+                state = 2;
+            }
+            else if (state == 2)
+            {
+                Serial.println('Larmar på');
+                state = 0;
+            }
+        }
 
-		code = "";
-	}
+        code = "";
+    }
 
-	if (hold.length() == 2 && (hold == "#*" || hold == "*#"))
-	{
-		Serial.println("Byt kod. Tryck en siffra i taget");
-		hold = "";
-		state = 1;
-	}
+    if (hold.length() == 2 && (hold == "#*" || hold == "*#"))
+    {
+        Serial.println("Byt kod. Tryck en siffra i taget");
+        hold = "";
+        state = 1;
+    }
 }
