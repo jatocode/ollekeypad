@@ -1,5 +1,6 @@
 
 #include <Keypad.h>
+#include <EEPROM.h>
 
 #define GREENPIN 13
 #define LARMPIN 12
@@ -41,8 +42,98 @@ String hold;
 String code;
 String newCode;
 String correctCode = "1234";
+int codeAddress = 0;
 
 int state = 0;
+
+// Snodde kod från
+// https://learn.adafruit.com/multi-tasking-the-arduino-part-1/a-classy-solution
+class Flasher
+{
+    // Class Member Variables
+    // These are initialized at startup
+    int ledPin;   // the number of the LED pin
+    long OnTime;  // milliseconds of on-time
+    long OffTime; // milliseconds of off-time
+
+    // These maintain the current state
+    int ledState;                 // ledState used to set the LED
+    unsigned long previousMillis; // will store last time LED was updated
+
+    // Constructor - creates a Flasher
+    // and initializes the member variables and state
+  public:
+    Flasher(int pin, long on, long off)
+    {
+        ledPin = pin;
+        pinMode(ledPin, OUTPUT);
+
+        OnTime = on;
+        OffTime = off;
+
+        ledState = LOW;
+        previousMillis = 0;
+    }
+
+    void Update()
+    {
+        // check to see if it's time to change the state of the LED
+        unsigned long currentMillis = millis();
+
+        if ((ledState == HIGH) && (currentMillis - previousMillis >= OnTime))
+        {
+            ledState = LOW;                 // Turn it off
+            previousMillis = currentMillis; // Remember the time
+            digitalWrite(ledPin, ledState); // Update the actual LED
+        }
+        else if ((ledState == LOW) && (currentMillis - previousMillis >= OffTime))
+        {
+            ledState = HIGH;                // turn it on
+            previousMillis = currentMillis; // Remember the time
+            digitalWrite(ledPin, ledState); // Update the actual LED
+        }
+    }
+};
+
+Flasher blueflash(BLUEPIN, 200, 200);
+Flasher greenflash(GREENPIN, 150, 1000);
+Flasher redflash(REDPIN, 150, 1000);
+Flasher redflashFast(REDPIN, 150, 150);
+
+void saveCode(String correctCode)
+{
+    byte codeBuf[5];
+    correctCode.getBytes(codeBuf, 5);
+    EEPROM.write(codeAddress, codeBuf[0]);
+    EEPROM.write(codeAddress + 1, codeBuf[1]);
+    EEPROM.write(codeAddress + 2, codeBuf[2]);
+    EEPROM.write(codeAddress + 3, codeBuf[3]);
+
+    // For testing simulated
+    readCode();
+}
+
+String readCode()
+{
+    byte codeBuf[5];
+    codeBuf[0] = EEPROM.read(codeAddress);
+    codeBuf[1] = EEPROM.read(codeAddress + 1);
+    codeBuf[2] = EEPROM.read(codeAddress + 2);
+    codeBuf[3] = EEPROM.read(codeAddress + 3);
+    codeBuf[4] = 0; // Nollterminera
+
+    if (codeBuf[0] == 255)
+    {
+        return "";
+    }
+
+    String code = String((char *)codeBuf);
+
+    Serial.print("Läste kod från EEPROM: ");
+    Serial.println(code);
+
+    return code;
+}
 
 void light1s(int pin)
 {
@@ -78,8 +169,25 @@ void setup()
     light1s(BLUEPIN);
     alarm(0.1);
 
+    String startcode = readCode();
+    Serial.println(startcode);
+    if (startcode != "")
+    {
+        Serial.println(startcode);
+        correctCode = startcode;
+    }
+
     Serial.println("Olles keyboard");
     Serial.println("Tryck din hemliga kod!");
+}
+
+bool doorIsOpen(int pin)
+{
+    if (digitalRead(pin) == HIGH)
+    {
+        return true;
+    }
+    return false;
 }
 
 void loop()
@@ -89,29 +197,33 @@ void loop()
         code = "";
         hold = "";
     }
+    if (doorIsOpen(CONTACTPIN))
+    {
+        blueflash.Update();
+    }
+
     switch (state)
     {
     case 0: // Larmat
-        digitalWrite(LED_BUILTIN, LOW);
-        digitalWrite(GREENPIN, LOW);
-        digitalWrite(REDPIN, HIGH);
-        if (digitalRead(CONTACTPIN) == HIGH)
+        if (doorIsOpen(CONTACTPIN))
         {
-            digitalWrite(BLUEPIN, HIGH);
+            redflashFast.Update();
             digitalWrite(LARMPIN, HIGH);
-
-            delay(50);
-            digitalWrite(BLUEPIN, LOW);
+        }
+        else
+        {
+            redflash.Update();
             digitalWrite(LARMPIN, LOW);
         }
+        digitalWrite(GREENPIN, LOW);
         break;
     case 1: // Byter kod
-        digitalWrite(LED_BUILTIN, HIGH);
+        digitalWrite(BLUEPIN, HIGH);
         break;
     case 2: // Avlarmat
-        digitalWrite(LED_BUILTIN, LOW);
-        digitalWrite(GREENPIN, HIGH);
+        greenflash.Update();
         digitalWrite(REDPIN, LOW);
+        digitalWrite(LARMPIN, LOW);
         break;
     default:
         break;
@@ -144,27 +256,26 @@ void loop()
     {
         if (state == 1)
         {
+            digitalWrite(BLUEPIN, LOW);
             Serial.print("DU HAR VALT NY KOD: ");
             Serial.println(code);
             correctCode = code;
+            saveCode(code);
             state = 0;
         }
         else if (code == correctCode)
         {
             Serial.println("Rätt kod!");
-            digitalWrite(LED_BUILTIN, HIGH);
-            delay(3000);
-            digitalWrite(LED_BUILTIN, LOW);
 
             // Toggle open or not
             if (state == 0)
             {
-                Serial.println('Larmar av');
+                Serial.println("Larmar av");
                 state = 2;
             }
             else if (state == 2)
             {
-                Serial.println('Larmar på');
+                Serial.println("Larmar på");
                 state = 0;
             }
         }
@@ -172,7 +283,7 @@ void loop()
         code = "";
     }
 
-    if (hold.length() == 2 && (hold == "#*" || hold == "*#"))
+    if (hold.length() == 1 && (hold == "#" || hold == "*#"))
     {
         Serial.println("Byt kod. Tryck en siffra i taget");
         hold = "";
