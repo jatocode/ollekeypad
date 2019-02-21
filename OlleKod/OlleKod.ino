@@ -109,8 +109,6 @@ void saveCode(String correctCode)
     EEPROM.write(codeAddress + 2, codeBuf[2]);
     EEPROM.write(codeAddress + 3, codeBuf[3]);
 
-    // For testing simulated
-    readCode();
 }
 
 String readCode()
@@ -201,6 +199,10 @@ void loop()
     {
         blueflash.Update();
     }
+    else 
+    {
+        digitalWrite(BLUEPIN, LOW);
+    }
 
     switch (state)
     {
@@ -283,7 +285,7 @@ void loop()
         code = "";
     }
 
-    if (hold.length() == 1 && (hold == "#" || hold == "*#"))
+    if (hold.length() == 2 && (hold == "#*" || hold == "*#"))
     {
         Serial.println("Byt kod. Tryck en siffra i taget");
         hold = "";
